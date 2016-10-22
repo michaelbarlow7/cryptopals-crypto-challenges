@@ -58,9 +58,8 @@ int main(int argc, char* argv[]){
     vector<char> charVec;
     hexToBase64(hexString, &charVec);
 
-    int i = 0;
-    while (charVec[i]) {
-        printf("%c", charVec[i++]);
+    for (int i = 0; charVec[i]; ++i) {
+        printf("%c", charVec[i]);
     }
     printf("\n");
     // Should be SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t
