@@ -6,6 +6,13 @@ using namespace std;
 
 // Assume firstString, secondString and resultString are the same length
 void fixedXor(char * firstString, char * secondString, char * resultString){
+    //printf("1:|%s|\n2:|%s|\n3:|%s|\n", firstString, secondString, resultString);
+    int ptr = 0;
+    while(firstString[ptr] && secondString[ptr]){
+        resultString[ptr] = firstString[ptr] ^ secondString[ptr];
+        ++ptr;
+    }
+    /*
     unsigned long int firstNum;
     unsigned long int secondNum;
     unsigned long int resultNum;
@@ -41,6 +48,10 @@ void fixedXor(char * firstString, char * secondString, char * resultString){
             }
         }
     }
+    */
+    //char * buffer = "blah";
+    //strncpy(resultString, buffer, 5);
+    //printf("1:|%s|\n2:|%s|\n3:|%s|\n", firstString, secondString, resultString);
 
 }
 
@@ -49,6 +60,8 @@ void xorCipher(char * hexString, char * resultString, int resultStringLength){
     int bufferSize = 2;//sizeof(unsigned long int);
     char buffer[bufferSize];
     int ptr = 0;
+    char firstString[resultStringLength];
+    char secondString[resultStringLength];
     while(hexString[ptr]){
         buffer[ptr % bufferSize] = hexString[ptr];
 
@@ -56,12 +69,25 @@ void xorCipher(char * hexString, char * resultString, int resultStringLength){
         if (!hexString[ptr] || (ptr % bufferSize == 0)){
             num = strtoul(buffer, NULL, 16);
             char c = (char) num;
-            resultString[(ptr/2) - 1] = c;
+            firstString[(ptr/2) - 1] = c;
+            //secondString[(ptr/2) - 1] = 'c';
         }
 
     }
-    printf("\n");
-    resultString[ptr/2] = '\0';
+
+    firstString[ptr/2] = '\0';
+    secondString[ptr/2] = '\0';
+    char c = 0x00;
+    do {
+        for (int i = 0; i < ptr/2; ++i){
+            secondString[i] = c;
+        }
+        fixedXor(firstString, secondString, resultString);
+        printf("c is %c. Result: %s\n",c, resultString);
+        // TODO: Need to use metric to determine what the result is.
+        // The answer is 'X' and it says "Cooking MC's like a pound of bacon"
+        ++c;
+    } while (c != 0x00);
 }
 
 int main(int argc, char* argv[]){
@@ -78,6 +104,5 @@ int main(int argc, char* argv[]){
     char resultString[strLength/2];
 
     xorCipher(hexString, resultString, strLength/2);
-    printf("Result: %s\n", resultString);
     return 0;
 }
