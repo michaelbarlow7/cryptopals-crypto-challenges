@@ -1,22 +1,20 @@
 #include <string.h>
 #include <stdio.h>
+#include <ctype.h>
 #include <stdlib.h>
 
 using namespace std;
 
 // Assume firstString, secondString and resultString are the same length
-void fixedXor(char * firstString, char * secondString, char * resultString){
-    //printf("1:|%s|\n2:|%s|\n3:|%s|\n", firstString, secondString, resultString);
-    int ptr = 0;
-    while(firstString[ptr] && secondString[ptr]){
-        resultString[ptr] = firstString[ptr] ^ secondString[ptr];
-        ++ptr;
+void fixedXor(char * firstString, char * secondString, char * xorredString, int length){
+    for (int i = 0; i < length; ++i) {
+        xorredString[i] = firstString[i] ^ secondString[i];
     }
 }
 
 void xorCipher(char * hexString, char * resultString, int resultStringLength){
     unsigned long int num;
-    int bufferSize = 2;//sizeof(unsigned long int);
+    int bufferSize = 2; // 2 hex characters == 1 byte (1 char)
     char buffer[bufferSize];
     int ptr = 0;
     char firstString[resultStringLength];
@@ -33,19 +31,34 @@ void xorCipher(char * hexString, char * resultString, int resultStringLength){
 
     }
 
-    firstString[ptr/2] = '\0';
-    secondString[ptr/2] = '\0';
     char c = 0x00;
+    int maxScore = 0;
+    char maxScoredChar = c;
+
+    char xorredString[resultStringLength];
     do {
-        for (int i = 0; i < ptr/2; ++i){
+        for (int i = 0; i < resultStringLength; ++i){
             secondString[i] = c;
         }
-        fixedXor(firstString, secondString, resultString);
-        printf("c is %c. Result: %s\n",c, resultString);
-        // TODO: Need to use metric to determine what the result is.
-        // The answer is 'X' and it says "Cooking MC's like a pound of bacon"
+        fixedXor(firstString, secondString, xorredString, resultStringLength);
+
+        int score = 0;
+        ptr = 0;
+        for (int i =0; i < resultStringLength; ++i) {
+            if(isalpha(xorredString[i])){
+                ++score;
+            }
+            ++ptr;
+        }
+        if (score > maxScore){
+            maxScore = score;
+            maxScoredChar = c;
+            strncpy(resultString, xorredString, resultStringLength);
+        }
         ++c;
     } while (c != 0x00);
+
+    printf("Winning xorred character is %c with score %d. Result: %s\n", maxScoredChar, maxScore, resultString);
 }
 
 int main(int argc, char* argv[]){
