@@ -12,47 +12,6 @@ void fixedXor(char * firstString, char * secondString, char * resultString){
         resultString[ptr] = firstString[ptr] ^ secondString[ptr];
         ++ptr;
     }
-    /*
-    unsigned long int firstNum;
-    unsigned long int secondNum;
-    unsigned long int resultNum;
-
-    unsigned long int bufferSize = sizeof(unsigned long int);
-    char firstBuffer[bufferSize];
-    char secondBuffer[bufferSize];
-    char resultBuffer[bufferSize];
-    int ptr = 0;
-    while(firstString[ptr]){
-        firstBuffer[ptr % bufferSize] = firstString[ptr];
-        secondBuffer[ptr % bufferSize] = secondString[ptr];
-
-        ptr++;
-        if (!firstString[ptr] ||  (ptr % bufferSize == 0)){
-            // Calculate result
-            firstNum = strtoul(firstBuffer, NULL, 16);
-            secondNum = strtoul(secondBuffer, NULL, 16);
-            resultNum = firstNum ^ secondNum;
-
-            // Convert to string
-            sprintf(resultBuffer, "%lx", resultNum);
-
-            // Copy result into resultString buffer
-            strncpy(resultString, resultBuffer, bufferSize);
-            resultString += bufferSize;
-
-            // Clear buffers
-            for (int i = 0; i < bufferSize; ++i){
-                firstBuffer[i] = 0;
-                secondBuffer[i] = 0;
-                resultBuffer[i] = 0;
-            }
-        }
-    }
-    */
-    //char * buffer = "blah";
-    //strncpy(resultString, buffer, 5);
-    //printf("1:|%s|\n2:|%s|\n3:|%s|\n", firstString, secondString, resultString);
-
 }
 
 void xorCipher(char * hexString, char * resultString, int resultStringLength){
@@ -70,7 +29,6 @@ void xorCipher(char * hexString, char * resultString, int resultStringLength){
             num = strtoul(buffer, NULL, 16);
             char c = (char) num;
             firstString[(ptr/2) - 1] = c;
-            //secondString[(ptr/2) - 1] = 'c';
         }
 
     }
