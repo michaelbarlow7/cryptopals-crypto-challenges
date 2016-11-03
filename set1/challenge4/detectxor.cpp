@@ -21,7 +21,6 @@ static map<char, int> scoreMap;
 
 map<char, int> getScoreMap(){
     if (scoreMap.empty()){
-        //printf("Empty\n");
         scoreMap['e'] = 26;
         scoreMap['t'] = 25;
         scoreMap['a'] = 24;
@@ -48,21 +47,12 @@ map<char, int> getScoreMap(){
         scoreMap['x'] = 3;
         scoreMap['q'] = 2;
         scoreMap['z'] = 1;
-    //}else{
-        //printf("Not empty\n");
     }
     return scoreMap;
 }
 
 int scoreChar(char c){
     return getScoreMap()[c];
-    /*
-    c = tolower(c);
-    if(isalpha(c)){
-        return 1;
-    }
-    return 0;
-    */
 }
 
 int xorCipher(char * firstString, char * resultString, int resultStringLength){
@@ -79,14 +69,10 @@ int xorCipher(char * firstString, char * resultString, int resultStringLength){
             secondString[i] = c;
         }
         fixedXor(firstString, secondString, xorredString, resultStringLength);
-        //printf("%s\n", xorredString);
 
         int score = 0;
         ptr = 0;
         for (int i =0; i < resultStringLength; ++i) {
-            //if(isalpha(xorredString[i])){
-                //++score;
-            //}
             score += scoreChar(xorredString[i]);
             ++ptr;
         }
@@ -98,7 +84,6 @@ int xorCipher(char * firstString, char * resultString, int resultStringLength){
         ++c;
     } while (c != 0x00);
 
-    //printf("Winning xorred character is %c with score %d. Result: %s\n", maxScoredChar, maxScore, resultString);
     return maxScore;
 }
 
@@ -124,23 +109,22 @@ int main(int argc, char* argv[]){
                     unencoded[(ptr/2) - 1] = c;
                 }
             }
-            //printf("%s\n", unencoded);
             char resultString[strLength];
 
             int score = xorCipher(unencoded, resultString, strLength);
-            printf("%d, resultString: %s\n", score, resultString);
 
             if (score > highestScore){
                 strncpy(bestString, resultString, strLength);
+                highestScore = score;
             }
 
         }
 
-        //printf("Best string %s\n", bestString);
         myfile.close();
     }else{
         cout << "Unable to open file\n";
     }
+    printf("Best string: %s\n", bestString);
 
     return 0;
 }
