@@ -96,12 +96,23 @@ int main(int argc, char * argv[]){
     for (int keySize = 2; keySize <= maxGuessSize; ++keySize){
         char string1[keySize];
         char string2[keySize];
+        char string3[keySize];
+        char string4[keySize];
         for (int i = 0; i < keySize; i++){
             string1[i] = ret[i];
             string2[i] = ret[i + keySize];
+            string3[i] = ret[i + 2*keySize];
+            string4[i] = ret[i + 3*keySize];
         }
-        float hammingDist = hammingDistance(string1, string2) / (float) keySize;
-        //cout << keySize << ": Hamming distance: " << hammingDist << '\n';
+        float hammingDist1 = hammingDistance(string1, string2) / (float) keySize;
+        float hammingDist2 = hammingDistance(string1, string3) / (float) keySize;
+        float hammingDist3 = hammingDistance(string1, string4) / (float) keySize;
+        float hammingDist4 = hammingDistance(string2, string3) / (float) keySize;
+        float hammingDist5 = hammingDistance(string2, string4) / (float) keySize;
+        float hammingDist6 = hammingDistance(string3, string4) / (float) keySize;
+
+        float hammingDist = (hammingDist1 + hammingDist2 + hammingDist3 + hammingDist4 + hammingDist5 + hammingDist6) / 6.0f;
+        cout << hammingDist << ": Hamming distance: " << keySize << '\n';
         if (hammingDist < smallestHammingDist){
             smallestHammingDist = hammingDist;
             likelyKeySize = keySize;
@@ -109,7 +120,13 @@ int main(int argc, char * argv[]){
     }
     cout << "Likey KeySize: " << likelyKeySize << " with hamming distance: " << smallestHammingDist << '\n';
 
-    // Top 4 were 30, 28, 40, 25
+    // Top 4 in order were 23, 28, 40, 33
+    /*
+     * 1. Now that you probably know the KEYSIZE: break the ciphertext into blocks of KEYSIZE length.
+        2. Now transpose the blocks: make a block that is the first byte of every block, and a block that is the second byte of every block, and so on.
+        3. Solve each block as if it was single-character XOR. You already have code to do this.
+        4.For each block, the single-byte XOR key that produces the best looking histogram is the repeating-key XOR key byte for that block. Put them together and you have the key.
+    */
 
     return 0;
 }
