@@ -16,7 +16,7 @@ static inline bool is_base64(BYTE c) {
     return (isalnum(c) || (c == '+') || (c == '/'));
 }
 
-/*vector<BYTE>*/void base64_decode(string const& encoded_string, vector<BYTE> * ret) {
+void base64_decode(string const& encoded_string, vector<BYTE> * ret) {
     int in_len = encoded_string.size();
     int i = 0;
     int j = 0;
@@ -87,6 +87,12 @@ int main(int argc, char * argv[]){
     } else {
         cout << "Unable to open file\n";
     }
+    /*
+    for (int i = 0; i < ret.size(); i++){
+        cout << ret[i];
+    }
+    cout << '\n';
+    */
 
     int maxGuessSize = 40;
 
@@ -112,14 +118,17 @@ int main(int argc, char * argv[]){
         float hammingDist6 = hammingDistance(string3, string4) / (float) keySize;
 
         float hammingDist = (hammingDist1 + hammingDist2 + hammingDist3 + hammingDist4 + hammingDist5 + hammingDist6) / 6.0f;
-        cout << hammingDist << ": Hamming distance: " << keySize << '\n';
+        //cout << hammingDist << ": Hamming distance: " << keySize << '\n';
         if (hammingDist < smallestHammingDist){
             smallestHammingDist = hammingDist;
             likelyKeySize = keySize;
         }
     }
-    cout << "Likey KeySize: " << likelyKeySize << " with hamming distance: " << smallestHammingDist << '\n';
+    //cout << "Likey KeySize: " << likelyKeySize << " with hamming distance: " << smallestHammingDist << '\n';
 
+    //vec<BYTE*>
+    for (int i = 0; i < ret.size(); i++){
+    }
     // Top 4 in order were 23, 28, 40, 33
     /*
      * 1. Now that you probably know the KEYSIZE: break the ciphertext into blocks of KEYSIZE length.
