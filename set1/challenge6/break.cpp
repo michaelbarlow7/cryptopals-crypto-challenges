@@ -1,10 +1,128 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <map>
+#include <string.h>
 
 using namespace std;
 
 typedef unsigned char BYTE;
+
+
+static map<char, int> scoreMap;
+
+map<char, int> getScoreMap(){
+    if (scoreMap.empty()){
+        scoreMap['e'] = 26;
+        scoreMap['t'] = 25;
+        scoreMap['a'] = 24;
+        scoreMap['o'] = 23;
+        scoreMap['i'] = 22;
+        scoreMap['n'] = 21;
+        scoreMap['s'] = 20;
+        scoreMap['h'] = 19;
+        scoreMap['r'] = 18;
+        scoreMap['d'] = 17;
+        scoreMap['l'] = 16;
+        scoreMap['c'] = 15;
+        scoreMap['u'] = 14;
+        scoreMap['m'] = 13;
+        scoreMap['w'] = 12;
+        scoreMap['f'] = 11;
+        scoreMap['g'] = 10;
+        scoreMap['y'] = 9;
+        scoreMap['p'] = 8;
+        scoreMap['b'] = 7;
+        scoreMap['v'] = 6;
+        scoreMap['k'] = 5;
+        scoreMap['j'] = 4;
+        scoreMap['x'] = 3;
+        scoreMap['q'] = 2;
+        scoreMap['z'] = 1;
+    }
+    return scoreMap;
+}
+
+int scoreChar(char c){
+    return getScoreMap()[c];
+}
+
+// XOR first string with second string and put result in xorredString
+void fixedXor(vector<BYTE> firstString, char * secondString, char * xorredString, int length){
+    for (int i = 0; i < length; ++i) {
+        xorredString[i] = firstString[i] ^ secondString[i];
+    }
+}
+
+char xorCipher(vector<BYTE> firstString, int resultStringLength){
+    int ptr = 0;
+    char secondString[resultStringLength];
+    char xorredString[resultStringLength];
+    char resultString[resultStringLength];
+
+    char c = 0x00;
+    int maxScore = 0;
+    char maxScoredChar = c;
+
+    do {
+        // Second string is just a string with all characters set to c
+        for (int i = 0; i < resultStringLength; ++i) {
+            secondString[i] = c;
+        }
+        fixedXor(firstString, secondString, xorredString, resultStringLength);
+
+        int score = 0;
+        ptr = 0;
+
+        for (int i =0; i < resultStringLength; ++i) {
+            score += scoreChar(xorredString[i]);
+            ++ptr;
+        }
+
+        /*
+        if (c == 'n'){
+            cout << c << ": ";
+            for (int i =0; i < resultStringLength; ++i) {
+                cout << xorredString[i];
+            }
+            cout << '\n';
+        }
+        */
+
+        if (score > maxScore){
+            maxScore = score;
+            maxScoredChar = c;
+            strncpy(resultString, xorredString, resultStringLength);
+        }
+        ++c;
+    } while (c != 0x00);
+
+    /*
+    cout << maxScoredChar << ": ";
+    for (int i =0; i < resultStringLength; ++i) {
+        cout << resultString[i];
+    }
+    cout << '\n';
+    */
+
+
+    return maxScoredChar;
+}
+
+void repeatingKeyXor(char * key, vector<BYTE> text, char * xorred, int size, int keySize){
+    //strncpy(xorred, text, size + 1);
+    for (int i = 0; i < size; i++){
+        xorred[i] = text[i];
+    }
+    xorred[size] = '\0';
+
+    //int keySize = getArraySize(key);
+    for (int i = 0; i < size; i++){
+        xorred[i] ^= key[i % keySize];
+        //printf("%02x", xorred[i]);
+    }
+    //printf("\n");
+}
 
 static const std::string base64_chars = 
 "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -79,63 +197,84 @@ int main(int argc, char * argv[]){
     ifstream myfile ("6.txt");
 
     string line;
-    vector<BYTE> ret;
+    vector<BYTE> encryptedBytes;
     if (myfile.is_open()){
         while (getline(myfile, line)){
-            base64_decode(line, &ret);
+            base64_decode(line, &encryptedBytes);
         }
     } else {
         cout << "Unable to open file\n";
     }
+
     /*
-    for (int i = 0; i < ret.size(); i++){
-        cout << ret[i];
+    for (int i = 0; i < encryptedBytes.size(); i++){
+        cout << encryptedBytes[i];
     }
     cout << '\n';
     */
+
+    // We have the file decoded from base64 now
 
     int maxGuessSize = 40;
 
     float smallestHammingDist = 8 * maxGuessSize;
     int likelyKeySize = -1;
 
+    float distances[maxGuessSize];
+
+    // Get four blocks, each of keysize length, and get hamming distances between each other (averaging)
     for (int keySize = 2; keySize <= maxGuessSize; ++keySize){
         char string1[keySize];
         char string2[keySize];
-        char string3[keySize];
-        char string4[keySize];
         for (int i = 0; i < keySize; i++){
-            string1[i] = ret[i];
-            string2[i] = ret[i + keySize];
-            string3[i] = ret[i + 2*keySize];
-            string4[i] = ret[i + 3*keySize];
+            string1[i] = encryptedBytes[i];
+            string2[i] = encryptedBytes[i + keySize];
         }
-        float hammingDist1 = hammingDistance(string1, string2) / (float) keySize;
-        float hammingDist2 = hammingDistance(string1, string3) / (float) keySize;
-        float hammingDist3 = hammingDistance(string1, string4) / (float) keySize;
-        float hammingDist4 = hammingDistance(string2, string3) / (float) keySize;
-        float hammingDist5 = hammingDistance(string2, string4) / (float) keySize;
-        float hammingDist6 = hammingDistance(string3, string4) / (float) keySize;
+        float hammingDist = hammingDistance(string1, string2) / (float) keySize;
 
-        float hammingDist = (hammingDist1 + hammingDist2 + hammingDist3 + hammingDist4 + hammingDist5 + hammingDist6) / 6.0f;
-        //cout << hammingDist << ": Hamming distance: " << keySize << '\n';
+        // This is an average of all hamming distances
+        //float hammingDist = (hammingDist1 + hammingDist2 + hammingDist3 + hammingDist4 + hammingDist5 + hammingDist6) / 6.0f;
+        cout << hammingDist << ": Hamming distance: " << keySize << '\n';
         if (hammingDist < smallestHammingDist){
             smallestHammingDist = hammingDist;
             likelyKeySize = keySize;
         }
     }
-    //cout << "Likey KeySize: " << likelyKeySize << " with hamming distance: " << smallestHammingDist << '\n';
+    //TODO: Get top 4 sizes, then try each one and assess based on score.
+    cout << "Likey KeySize: " << likelyKeySize << " with hamming distance: " << smallestHammingDist << '\n';
+    return 0;
+    //likelyKeySize = 29;
 
-    //vec<BYTE*>
-    for (int i = 0; i < ret.size(); i++){
-    }
     // Top 4 in order were 23, 28, 40, 33
+    // I think the naswer is 29. Need to fix the hamming distance thing above
     /*
      * 1. Now that you probably know the KEYSIZE: break the ciphertext into blocks of KEYSIZE length.
         2. Now transpose the blocks: make a block that is the first byte of every block, and a block that is the second byte of every block, and so on.
         3. Solve each block as if it was single-character XOR. You already have code to do this.
         4.For each block, the single-byte XOR key that produces the best looking histogram is the repeating-key XOR key byte for that block. Put them together and you have the key.
     */
+
+    // An array of BYTE vectors
+    vector<BYTE> encryptedBlocks[likelyKeySize];
+    for (int i = 0; i < encryptedBytes.size(); i++) {
+        encryptedBlocks[i % likelyKeySize].push_back(encryptedBytes[i]);
+    }
+
+    char xorKey[likelyKeySize];
+    // Do each as a single-char xor
+    for (int i = 0; i < likelyKeySize; i++){
+        char maxChar = xorCipher(encryptedBlocks[i], encryptedBlocks[i].size());
+        //cout << "MaxChar is: " << maxChar << "\n";
+        cout << maxChar;
+        xorKey[i] = maxChar;
+    }
+    cout << '\n';
+
+    // xor with xorkey
+    char xorred[encryptedBytes.size()];
+    repeatingKeyXor(xorKey, encryptedBytes, xorred, encryptedBytes.size(), likelyKeySize);
+
+    cout << "Xorred:\n" << xorred << "\n";
 
     return 0;
 }
