@@ -4,6 +4,8 @@
 #include <map>
 #include <string.h>
 
+#define KEYSIZE_GUESS_AMOUNT 4
+
 using namespace std;
 
 typedef unsigned char BYTE;
@@ -109,18 +111,21 @@ char xorCipher(vector<BYTE> firstString, int resultStringLength){
     return maxScoredChar;
 }
 
-void repeatingKeyXor(char * key, vector<BYTE> text, char * xorred, int size, int keySize){
+int repeatingKeyXor(char * key, vector<BYTE> text, char * xorred, int size, int keySize){
     //strncpy(xorred, text, size + 1);
     for (int i = 0; i < size; i++){
         xorred[i] = text[i];
     }
     xorred[size] = '\0';
 
+    int score = 0;
     //int keySize = getArraySize(key);
     for (int i = 0; i < size; i++){
         xorred[i] ^= key[i % keySize];
         //printf("%02x", xorred[i]);
+        score += scoreChar(xorred[i]);
     }
+    return score;
     //printf("\n");
 }
 
@@ -217,9 +222,6 @@ int main(int argc, char * argv[]){
 
     int maxGuessSize = 40;
 
-    float smallestHammingDist = 8 * maxGuessSize;
-    int likelyKeySize = -1;
-
     float distances[maxGuessSize];
 
     // Get four blocks, each of keysize length, and get hamming distances between each other (averaging)
@@ -230,51 +232,52 @@ int main(int argc, char * argv[]){
             string1[i] = encryptedBytes[i];
             string2[i] = encryptedBytes[i + keySize];
         }
-        float hammingDist = hammingDistance(string1, string2) / (float) keySize;
+        distances[keySize] = hammingDistance(string1, string2) / (float) keySize;
+    }
+    float largestSmallest = -1.0f;
+    int keySizes[KEYSIZE_GUESS_AMOUNT];
+    for (int i = 0; i < KEYSIZE_GUESS_AMOUNT; i++){
+        float smallestHammingDist = 8 * maxGuessSize;
+        int smallestKeySize = -1;
+        for (int j = 2; j <= maxGuessSize; j++){
+            if (distances[j] <= largestSmallest){
+                continue;
+            }
+            if (distances[j] < smallestHammingDist){
+                smallestHammingDist = distances[j];
+                smallestKeySize = j;
+            }
+        }
+        keySizes[i] = smallestKeySize;
+        largestSmallest = smallestHammingDist;
+    }
 
-        // This is an average of all hamming distances
-        //float hammingDist = (hammingDist1 + hammingDist2 + hammingDist3 + hammingDist4 + hammingDist5 + hammingDist6) / 6.0f;
-        cout << hammingDist << ": Hamming distance: " << keySize << '\n';
-        if (hammingDist < smallestHammingDist){
-            smallestHammingDist = hammingDist;
-            likelyKeySize = keySize;
+    char maxXorred[encryptedBytes.size()];
+    int maxScore = -1;
+    for (int j = 0; j < KEYSIZE_GUESS_AMOUNT; j++) {
+        int likelyKeySize = keySizes[j];
+        char xorKey[likelyKeySize];
+        // An array of BYTE vectors
+        vector<BYTE> encryptedBlocks[likelyKeySize];
+        for (int i = 0; i < encryptedBytes.size(); i++) {
+            encryptedBlocks[i % likelyKeySize].push_back(encryptedBytes[i]);
+        }
+
+        char tmpXorKey[likelyKeySize];
+        // Do each as a single-char xor
+        for (int i = 0; i < likelyKeySize; i++){
+            char maxChar = xorCipher(encryptedBlocks[i], encryptedBlocks[i].size());
+            xorKey[i] = maxChar;
+        }
+
+        char xorred[encryptedBytes.size()];
+        // Find highest score
+        int score = repeatingKeyXor(xorKey, encryptedBytes, xorred, encryptedBytes.size(), likelyKeySize);
+        if (score > maxScore){
+            maxScore = score;
+            strncpy(maxXorred, xorred, encryptedBytes.size());
         }
     }
-    //TODO: Get top 4 sizes, then try each one and assess based on score.
-    cout << "Likey KeySize: " << likelyKeySize << " with hamming distance: " << smallestHammingDist << '\n';
-    return 0;
-    //likelyKeySize = 29;
-
-    // Top 4 in order were 23, 28, 40, 33
-    // I think the naswer is 29. Need to fix the hamming distance thing above
-    /*
-     * 1. Now that you probably know the KEYSIZE: break the ciphertext into blocks of KEYSIZE length.
-        2. Now transpose the blocks: make a block that is the first byte of every block, and a block that is the second byte of every block, and so on.
-        3. Solve each block as if it was single-character XOR. You already have code to do this.
-        4.For each block, the single-byte XOR key that produces the best looking histogram is the repeating-key XOR key byte for that block. Put them together and you have the key.
-    */
-
-    // An array of BYTE vectors
-    vector<BYTE> encryptedBlocks[likelyKeySize];
-    for (int i = 0; i < encryptedBytes.size(); i++) {
-        encryptedBlocks[i % likelyKeySize].push_back(encryptedBytes[i]);
-    }
-
-    char xorKey[likelyKeySize];
-    // Do each as a single-char xor
-    for (int i = 0; i < likelyKeySize; i++){
-        char maxChar = xorCipher(encryptedBlocks[i], encryptedBlocks[i].size());
-        //cout << "MaxChar is: " << maxChar << "\n";
-        cout << maxChar;
-        xorKey[i] = maxChar;
-    }
-    cout << '\n';
-
-    // xor with xorkey
-    char xorred[encryptedBytes.size()];
-    repeatingKeyXor(xorKey, encryptedBytes, xorred, encryptedBytes.size(), likelyKeySize);
-
-    cout << "Xorred:\n" << xorred << "\n";
-
+    cout << maxXorred << "\n";
     return 0;
 }
